@@ -6,7 +6,7 @@ from buttons import *
 from states import ChangeAdminInfo
 from database.adminservice import *
 
-admin_id = 575148251
+admin_id = 558618720
 admin_router = Router()
 
 @admin_router.message(Command(commands=["admin"]))

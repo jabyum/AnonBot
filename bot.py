@@ -1,5 +1,4 @@
 import re
-
 from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.utils.deep_linking import create_start_link
@@ -46,16 +45,10 @@ async def start(message: Message, state: FSMContext, command: BotCommand = None)
             add_user(message.from_user.id, link_for_db)
         await check_channels(message)
     else:
-        if not checker and not command.args:
+        if not checker:
             new_link = await create_start_link(message.bot, str(message.from_user.id), encode=True)
             link_for_db = new_link[new_link.index("=") + 1:]
             add_user(message.from_user.id, link_for_db)
-            await message.bot.send_message(chat_id=message.from_user.id,
-                                           text= f"🚀 <b>Начни получать анонимные сообщения прямо сейчас!</b>\n\n"
-                                                 f"Твоя личная ссылка:\n👉{new_link}\n\n"
-                                                 f"Размести эту ссылку ☝️ в своём профиле Telegram/Instagram/TikTok или "
-                                                 f"других соц сетях, чтобы начать получать сообщения 💬", parse_mode="html",
-                                           reply_markup=await main_menu_bt())
 
         if command.args:
             if not checker:
@@ -66,6 +59,7 @@ async def start(message: Message, state: FSMContext, command: BotCommand = None)
                                                reply_markup= await main_menu_bt())
             link_user = get_user_by_link(command.args)
             if link_user:
+                add_link_statistic(link_user)
                 greeting = get_greeting(link_user)
                 await message.bot.send_message(chat_id=message.from_user.id,
                                                text="🚀 Здесь можно <b>отправить анонимное сообщение человеку</b>, который опубликовал "
@@ -80,6 +74,14 @@ async def start(message: Message, state: FSMContext, command: BotCommand = None)
                     await message.bot.send_message(chat_id=message.from_user.id, text=greeting)
                 await state.set_state(Links.send_st)
                 await state.set_data({"link_user": link_user})
+        if not command.args:
+            link = await create_start_link(message.bot, get_user_link(message.from_user.id))
+            await message.bot.send_message(chat_id=message.from_user.id,
+                                           text=f"🚀 <b>Начни получать анонимные сообщения прямо сейчас!</b>\n\n"
+                                                f"Твоя личная ссылка:\n👉{link}\n\n"
+                                                f"Размести эту ссылку ☝️ в своём профиле Telegram/Instagram/TikTok или "
+                                                f"других соц сетях, чтобы начать получать сообщения 💬", parse_mode="html",
+                                           reply_markup=await main_menu_bt())
 @bot_router.callback_query(F.data.in_(["check_chan", "cancel", "pay10", "pay20", "pay50", "pay100", "pay500",
                                        "greeting_rem"]))
 async def call_backs(query: CallbackQuery, state: FSMContext):
@@ -128,7 +130,6 @@ async def call_backs(query: CallbackQuery, state: FSMContext):
 @bot_router.callback_query(lambda call: "again_" in call.data)
 async def again(query: CallbackQuery, state: FSMContext):
     link_user = int(query.data.replace("again_", ""))
-    print(link_user)
     await query.bot.send_message(chat_id=query.from_user.id,
                                  text="🚀 Здесь можно <b>отправить анонимное сообщение человеку</b>, который опубликовал "
                                         "эту ссылку.\n\n"
@@ -249,8 +250,6 @@ async def change_link(message: Message, state: FSMContext):
 
 
 
-
-
 @bot_router.message()
 async def any_or_answer(message:Message, state: FSMContext):
     channels_checker = await check_channels(message)
@@ -287,12 +286,14 @@ async def any_or_answer(message:Message, state: FSMContext):
                                                reply_markup=await again_in(message.from_user.id))
                 await message.bot.send_message(chat_id=message.from_user.id, text="<b>Твой ответ успешно отправлен</b> 😺",
                                                reply_markup=await main_menu_bt(), parse_mode="html")
+                add_answer_statistic(message.from_user.id)
             elif message.video_note or message.sticker or message.text:
                 await message.bot.copy_message(chat_id=to_id, from_chat_id=message.from_user.id,
                                                message_id=message.message_id, reply_to_message_id=to_message,
                                                reply_markup=await again_in(message.from_user.id))
                 await message.bot.send_message(chat_id=message.from_user.id, text="<b>Твой ответ успешно отправлен</b> 😺",
                                                reply_markup=await main_menu_bt(), parse_mode="html")
+                add_answer_statistic(message.from_user.id)
             elif message.video or message.photo or message.document:
                 await message.bot.copy_message(chat_id=to_id, from_chat_id=message.from_user.id,
                                                message_id=message.message_id,
@@ -301,6 +302,7 @@ async def any_or_answer(message:Message, state: FSMContext):
                                                reply_markup=await again_in(message.from_user.id))
                 await message.bot.send_message(chat_id=message.from_user.id, text="<b>Твой ответ успешно отправлен</b> 😺",
                                                reply_markup=await main_menu_bt(), parse_mode="html")
+                add_answer_statistic(message.from_user.id)
             else:
                 await message.bot.send_message(message.from_user.id, "️️❗Ошибка. Неподдерживаемый формат",
                                                reply_markup=await main_menu_bt())
@@ -327,6 +329,39 @@ async def any_or_answer(message:Message, state: FSMContext):
                                                                               f"❗ Обратите внимание, что при смене ссылки, старая ссылка перестанет быть активной!",
                                            parse_mode="html", reply_markup=await link_in())
             await state.set_state(Links.change_link)
+        elif message.text == "🚀Начать":
+            await state.clear()
+            link = await create_start_link(message.bot, get_user_link(message.from_user.id))
+            await message.bot.send_message(chat_id=message.from_user.id,
+                                           text=f"🚀 <b>Начни получать анонимные сообщения прямо сейчас!</b>\n\n"
+                                                f"Твоя личная ссылка:\n👉{link}\n\n"
+                                                f"Размести эту ссылку ☝️ в своём профиле Telegram/Instagram/TikTok или "
+                                                f"других соц сетях, чтобы начать получать сообщения 💬",
+                                           parse_mode="html",
+                                           reply_markup=await main_menu_bt())
+        elif message.text == "⭐️Ваша статистика":
+            statistic = get_all_statistic(message.from_user.id)
+            bot_info = await create_start_link(message.bot, str(message.from_user.id))
+            bot_cor = bot_info.replace("https://t.me/", "")
+            index = bot_cor.index("?")
+            bot_username = bot_cor[:index]
+
+
+            await message.bot.send_message(chat_id=message.from_user.id,
+                                           text=f"Ваша статистика:\n\n"
+                                                f"💬 Сообщений сегодня: {statistic.get("messages_today")}\n"
+                                                f"↩️ Ответов сегодня: {statistic.get("answers_today")}\n"
+                                                f"👁‍🗨 Переходов по ссылке сегодня: {statistic.get("links_today")}\n"
+                                                f"⭐️ Популярность сегодня: {statistic.get("position_today")} место\n\n"
+                                                f"💬 Сообщений за всё время: {statistic.get("messages_overall")}\n"
+                                                f"↩️ Ответов за всё время: {statistic.get("answers_overall")}\n"
+                                                f"👁‍🗨 Переходов по ссылке за всё время: {statistic.get("links_overall")}\n"
+                                                f"⭐️ Популярность за всё время: {statistic.get("position_overall")} место\n\n"
+                                                f"Для повышения ⭐️ популярности необходимо увеличить "
+                                                f"количество переходов по вашей ссылке.\n\n"
+                                                f"@{bot_username}",
+                                           parse_mode="html", reply_markup=await main_menu_bt())
+
         else:
             link = await create_start_link(message.bot, get_user_link(message.from_user.id))
             await message.bot.send_message(chat_id=message.from_user.id,

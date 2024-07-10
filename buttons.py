@@ -24,9 +24,11 @@ async def channels_in(all_channels):
     return keyboard_builder.as_markup()
 async def main_menu_bt():
     buttons = [
+        [KeyboardButton(text="🚀Начать")],
         [KeyboardButton(text="☕️Поддержать разработчика")],
         [KeyboardButton(text="📛Изменить ссылку")],
-        [KeyboardButton(text="👋Изменить приветствие")]
+        [KeyboardButton(text="👋Изменить приветствие")],
+        [KeyboardButton(text="⭐️Ваша статистика")]
     ]
     kb = ReplyKeyboardMarkup(resize_keyboard=True, keyboard=buttons)
     return kb
