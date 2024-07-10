@@ -1,0 +1,5 @@
+sqlalchemy
+aiogram
+regex
+pandas
+openpyxl
