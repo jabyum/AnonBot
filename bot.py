@@ -43,7 +43,6 @@ async def start(message: Message, state: FSMContext, command: BotCommand = None)
             new_link = await create_start_link(message.bot, str(message.from_user.id), encode=True)
             link_for_db = new_link[new_link.index("=")+1:]
             add_user(message.from_user.id, link_for_db)
-        await check_channels(message)
     else:
         if not checker:
             new_link = await create_start_link(message.bot, str(message.from_user.id), encode=True)
@@ -262,7 +261,6 @@ async def any_or_answer(message:Message, state: FSMContext):
             new_link = await create_start_link(message.bot, str(message.from_user.id), encode=True)
             link_for_db = new_link[new_link.index("=")+1:]
             add_user(message.from_user.id, link_for_db)
-        await check_channels(message)
     elif not checker:
         new_link = await create_start_link(message.bot, str(message.from_user.id), encode=True)
         link_for_db = new_link[new_link.index("=") + 1:]

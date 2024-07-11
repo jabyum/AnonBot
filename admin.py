@@ -13,7 +13,9 @@ admin_router = Router()
 async def admin_mm(message: Message):
     # TODO проверку админа после добавления админа
     if message.from_user.id == admin_id:
-        await message.bot.send_message(message.from_user.id, f"🕵Панель админа",
+        count = get_users_count()
+        await message.bot.send_message(message.from_user.id, f"🕵Панель админа\n"
+                                                             f"Количество юзеров в боте: {count}",
                                        reply_markup=await admin_menu_in())
 @admin_router.callback_query(F.data.in_(["cancel", "none",
                                          "change_channels", "add_channel", "delete_channel", "mailing"]))
