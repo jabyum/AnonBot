@@ -5,7 +5,7 @@ from aiogram.types import Message, CallbackQuery
 from buttons import *
 from states import ChangeAdminInfo
 from database.adminservice import *
-
+# TODO id admina
 admin_id = 558618720
 admin_router = Router()
 
