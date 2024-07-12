@@ -90,8 +90,8 @@ async def call_backs(query: CallbackQuery, state: FSMContext):
         await query.bot.delete_message(chat_id=query.from_user.id, message_id=query.message.message_id)
         if checking:
             await query.bot.send_message(chat_id=query.from_user.id, text="<b>Готово!\n\n"
-                                                                          "Чтобы задать вопрос вашему другу</b>, перейдите по"
-                                                                          " его ссылке ещё раз 🔗",
+                                                                          "Чтобы задать вопрос вашему другу, перейдите по"
+                                                                          " его ссылке ещё раз 🔗</b>",
                                          parse_mode="html", reply_markup=await main_menu_bt())
     if query.data == "cancel":
         await query.bot.delete_message(chat_id=query.from_user.id, message_id=query.message.message_id)
