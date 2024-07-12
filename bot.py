@@ -89,14 +89,10 @@ async def call_backs(query: CallbackQuery, state: FSMContext):
         checking = await check_channels(query)
         await query.bot.delete_message(chat_id=query.from_user.id, message_id=query.message.message_id)
         if checking:
-            link = await create_start_link(query.bot, get_user_link(query.from_user.id))
-            await query.bot.send_message(chat_id=query.from_user.id,
-                                         text=f"🚀 <b>Начни получать анонимные сообщения прямо сейчас!</b>\n\n"
-                                                f"Твоя личная ссылка:\n👉{link}\n\n"
-                                                f"Размести эту ссылку ☝️ в своём профиле Telegram/Instagram/TikTok или "
-                                                f"других соц сетях, чтобы начать получать сообщения 💬",
-                                         parse_mode="html",
-                                         reply_markup=await main_menu_bt())
+            await query.bot.send_message(chat_id=query.from_user.id, text="<b>Готово!\n\n"
+                                                                    "Чтобы задать вопрос вашему другу</b>, перейдите по"
+                                                                    " его ссылке ещё раз 🔗",
+                                         parse_mode="html", reply_markup=main_menu_bt())
     if query.data == "cancel":
         await query.bot.delete_message(chat_id=query.from_user.id, message_id=query.message.message_id)
         link = await create_start_link(query.bot, get_user_link(query.from_user.id))
@@ -261,10 +257,12 @@ async def any_or_answer(message:Message, state: FSMContext):
             new_link = await create_start_link(message.bot, str(message.from_user.id), encode=True)
             link_for_db = new_link[new_link.index("=")+1:]
             add_user(message.from_user.id, link_for_db)
+            await message.bot.send_message(chat_id=message.from_user.id, text="", reply_markup=await main_menu_bt())
     elif not checker:
         new_link = await create_start_link(message.bot, str(message.from_user.id), encode=True)
         link_for_db = new_link[new_link.index("=") + 1:]
         add_user(message.from_user.id, link_for_db)
+
         await message.bot.send_message(chat_id=message.from_user.id,
                                        text=f"🚀 <b>Начни получать анонимные сообщения прямо сейчас!</b>\n\n"
                                             f"Твоя личная ссылка:\n👉{new_link}\n\n"
